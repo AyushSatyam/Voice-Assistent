@@ -1,2 +1,2 @@
 # Voice-Assistent
- Personal Voice Assistent using pthon
+ Personal Voice Assistent using python
