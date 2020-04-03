@@ -1,3 +1,4 @@
+"""
 from __future__ import print_function
 import datetime
 import pickle
@@ -8,28 +9,138 @@ from google.auth.transport.requests import Request
 import os
 import time
 import pyttsx3
-import playsound
 import speech_recognition as sr
-from gtts import gTTS
 import pytz
 import subprocess
+"""
+import speech_recognition as sr
+import os
+import pyttsx3
+#from gtts import gTTS
+import datetime
+import warnings
+import calendar
+import random
+import wikipedia
 
-# If modifying these scopes, delete the file token.pickle.
+#Ignore any warnings
+warnings.filterwarnings('ignore')
+
+def recordAudio():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        print('Say something: ')
+        audio = r.listen(source)
+        
+    data = ""
+
+    try:
+        data = r.recognize_google(audio)
+        print(data)
+    except Exception as e:
+        print("Exception: " + str(e))
+    return data
+
+# Function to get the virtual assistant response
+def assistantResponse(text):
+    print(text)
+    engine = pyttsx3.init()
+    engine.say(text)
+    engine.runAndWait()
+
+def wakeWord(text):
+    WAKE_WORDS = ['hey computer','ok computer']
+    text = text.lower()
+    #Check to see if users command have a wake word
+    for phrase in WAKE_WORDS:
+        if phrase in text:
+            return True
+    return False
+
+def getDate():
+    now = datetime.datetime.now()
+    my_date = datetime.datetime.today()
+    weekday = calendar.day_name[my_date.weekday()]
+    monthNum = now.month
+    dayNum = now.day
+    month_names = ["january", "february", "march", "april", "may", "june","july", "august", "september","october","november", "december"]
+    day_names = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+    odinalNumbers = ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th','11th','12th','13th','14th','15th','16th','17th','18th','19th','20th','21st','22nd','13rd','24th','25th','26th','27th','28th','29th','30th','31st']
+
+    return 'Today is ' + weekday +' '+ month_names[monthNum-1]+' '+ odinalNumbers[dayNum-1]+'.' 
+
+
+def greeting(text):
+    GREETING_INPUT = ['hi','hey','hola','greeting','wassup','hello']
+    GREETING_RESPONCE = ['howdy','whats good','hello','hey there','hey ayush','hello ayush']
+    for word in text.split():
+        if word.lower() in GREETING_INPUT:
+            return random.choice(GREETING_RESPONCE) + "."
+    return ''
+
+def getPerson(text):
+    wordList = text.split()
+    for i in range(0,len(wordList)):
+        if i + 3 <= len(wordList) -1 and wordList[i].lower() == 'who' and wordList[i+1].lower() == 'is':
+            return wordList[i+2] + ' '+ wordList[i+3]  
+
+while True:
+    # Record the audio
+    text = recordAudio()
+    response = '' #Empty response string
+     
+    # Checking for the wake word/phrase
+    if (wakeWord(text) == True):
+         # Check for greetings by the user
+        response = response + greeting(text)
+        # Check to see if the user said date
+        # Check to see if the user said date
+        if ('date' in text):
+            get_date = getDate()
+            response = response + ' ' + get_date
+         # Check to see if the user said time
+        if('time' in text):
+            now = datetime.datetime.now()
+            meridiem = ''
+            if now.hour >= 12:
+                meridiem = 'pm' #Post Meridiem (PM)
+                hour = now.hour - 12
+            else:
+                meridiem = 'am'#Ante Meridiem (AM)
+                hour = now.hour
+           # Convert minute into a proper string
+            if now.minute < 10:
+                minute = '0'+str(now.minute)
+            else:
+                minute = str(now.minute)
+            response = response + ' '+ 'It is '+ str(hour)+ ':'+minute+' '+meridiem+' .'
+                
+        # Check to see if the user said 'who is'
+        if ('who is' in text):
+            person = getPerson(text)
+            wiki = wikipedia.summary(person, sentences=2)            
+            response = response + ' ' + wiki
+       
+       # Assistant Audio Response
+        assistantResponse(response)
+
+
+
+
+
+
+
+
+"""
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
-
-DAYS = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday']
-MONTHS = ['january','fabruary','march','april','may','june','july','august','september','october','november','december']
-DAY_EXTENTIONS = ['rd','th','st','nd']
+MONTHS = ["january", "february", "march", "april", "may", "june","july", "august", "september","october","november", "december"]
+DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+DAY_EXTENTIONS = ["rd", "th", "st", "nd"]
 
 def speak(text):
     engine = pyttsx3.init()
     engine.say(text)
     engine.runAndWait()
-    #tts = gTTS(text=text, lang='en')
-    #filename = 'voice.mp3'
-    #tts.save(filename)
-    #playsound.playsound(filename)
-
 
 def get_audio():
     r = sr.Recognizer()
@@ -47,17 +158,12 @@ def get_audio():
 
 
 def authenticate_google():
-    """Shows basic usage of the Google Calendar API.
-    Prints the start and name of the next 10 events on the user's calendar.
-    """
+
     creds = None
-    # The file token.pickle stores the user's access and refresh tokens, and is
-    # created automatically when the authorization flow completes for the first
-    # time.
     if os.path.exists('token.pickle'):
         with open('token.pickle', 'rb') as token:
             creds = pickle.load(token)
-    # If there are no (valid) credentials available, let the user log in.
+
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
@@ -65,7 +171,7 @@ def authenticate_google():
             flow = InstalledAppFlow.from_client_secrets_file(
                 'credentials.json', SCOPES)
             creds = flow.run_local_server(port=0)
-        # Save the credentials for the next run
+
         with open('token.pickle', 'wb') as token:
             pickle.dump(creds, token)
 
@@ -73,7 +179,8 @@ def authenticate_google():
 
     return service
 
-def get_events(day,service):
+
+def get_events(day, service):
     # Call the Calendar API
     date = datetime.datetime.combine(day, datetime.datetime.min.time())
     end_date = datetime.datetime.combine(day, datetime.datetime.max.time())
@@ -81,29 +188,31 @@ def get_events(day,service):
     date = date.astimezone(utc)
     end_date = end_date.astimezone(utc)
 
-    events_result = service.events().list(calendarId='primary', timeMin=date.isoformat(), 
-                            timeMax=end_date.isoformat(),singleEvents=True,
+    events_result = service.events().list(calendarId='primary', timeMin=date.isoformat(), timeMax=end_date.isoformat(),
+                                        singleEvents=True,
                                         orderBy='startTime').execute()
     events = events_result.get('items', [])
 
     if not events:
         speak('No upcoming events found.')
     else:
-        speak(f"you have {len(events)} events on this day.")
-        
+        speak(f"You have {len(events)} events on this day.")
+
         for event in events:
             start = event['start'].get('dateTime', event['start'].get('date'))
             print(start, event['summary'])
-            start_time = str(start.split('T')[1].split('.')[0])
-            if int(start_time.split(':')[0])<12:
+            start_time = str(start.split("T")[1].split("-")[0])
+            if int(start_time.split(":")[0]) < 12:
                 start_time = start_time + "am"
             else:
-                start_time = str(int(start_time.split(':')[0])-12) + start_time.split(":")[1]
-                start_time = start_time+"pm"
-            
-            speak(event['summary'] + 'at' + start_time)
+                start_time = str(int(start_time.split(":")[0])-12) + start_time.split(":")[1]
+                start_time = start_time + "pm"
+
+            speak(event["summary"] + " at " + start_time)
+
 
 def get_date(text):
+    text = text.lower()
     today = datetime.date.today()
 
     if text.count("today") > 0:
@@ -130,17 +239,18 @@ def get_date(text):
                     except:
                         pass
 
-    if month < today.month and month != -1:  
+    # THE NEW PART STARTS HERE
+    if month < today.month and month != -1:  # if the month mentioned is before the current month set the year to the next
         year = year+1
 
-    
-    if month == -1 and day != -1:  
+    # This is slighlty different from the video but the correct version
+    if month == -1 and day != -1:  # if we didn't find a month, but we have a day
         if day < today.day:
             month = today.month + 1
         else:
             month = today.month
 
-    
+    # if we only found a dta of the week
     if month == -1 and day == -1 and day_of_week != -1:
         current_day_of_week = today.weekday()
         dif = day_of_week - current_day_of_week
@@ -152,49 +262,46 @@ def get_date(text):
 
         return today + datetime.timedelta(dif)
 
-    if day != -1:
+    if day != -1:  # FIXED FROM VIDEO
         return datetime.date(month=month, day=day, year=year)
-
 
 def note(text):
     date = datetime.datetime.now()
-    file_name = str(date).replace(":","-") + "-note.txt"
-    with open(file_name,"w") as f:
+    file_name = str(date).replace(":", "-") + "-note.txt"
+    with open(file_name, "w") as f:
         f.write(text)
-    
-    subprocess.Popen(['notepad.exe',file_name])
+
+    subprocess.Popen(["notepad.exe", file_name])
 
 
-WAKE = 'hello'
-#text = get_audio().lower()
-#speak(get_date(text))
 
+##I will fix it latter there are some issues
+WAKE = "hello"
 SERVICE = authenticate_google()
-print('start')
-speak('Hello ayush. what i can do for you?')
+print("Start")
+
 while True:
-    print('Listening')
+    print("Listening")
     text = get_audio()
 
-    if text.count(WAKE)>0:
+    if text.count(WAKE) > 0:
         speak("I am ready")
         text = get_audio()
-            
-        CALENDER_STRS = ['what do i have','do i have plans','am i busy','what are my plans']
-        for phrase in CALENDER_STRS:
+
+        CALENDAR_STRS = ["what do i have", "do i have plans", "am i busy"]
+        for phrase in CALENDAR_STRS:
             if phrase in text:
                 date = get_date(text)
                 if date:
-                    get_events(date,SERVICE)
+                    get_events(date, SERVICE)
                 else:
-                    speak("I'm not able to understand.")
+                    speak("I don't understand")
 
-        NOTE_STRS = ['make a note','write this down','remember this']
+        NOTE_STRS = ["make a note", "write this down", "remember this"]
         for phrase in NOTE_STRS:
             if phrase in text:
-                speak('What would you like me to write down?')
+                speak("What would you like me to write down?")
                 note_text = get_audio()
                 note(note_text)
                 speak("I've made a note of that.")
-
-
+"""
