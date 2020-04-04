@@ -28,10 +28,22 @@ import webbrowser
 import smtplib
 import requests
 import re
+import pyautogui
 #from weather import Weather
 
 #Ignore any warnings
 warnings.filterwarnings('ignore')
+
+class person:
+    name = ''
+    def setName(self, name):
+        self.name = name
+
+class asis:
+    name = ''
+    def setName(self, name):
+        self.name = name
+
 
 def recordAudio():
     r = sr.Recognizer()
@@ -57,13 +69,12 @@ def assistantResponse(text):
     speak.Speak(text)
 
 def wakeWord(text):
-    WAKE_WORDS = ['hey computer','ok computer']
+    WAKE_WORDS = ['hey computer','ok computer','hello']
     text = text.lower()
     #Check to see if users command have a wake word
     for phrase in WAKE_WORDS:
         if phrase in text:
-            return True
-    return False
+            return phrase
 
 def getDate():
     now = datetime.datetime.now()
@@ -100,13 +111,19 @@ def note(text):
 
     subprocess.Popen(["notepad.exe", file_name])
 
+person_obj = person()
+asis_obj = asis()
+asis_obj.name = 'kiki'
+person_obj.name = 'ayush'
+
+
 while True:
     # Record the audio
     text = recordAudio()
     response = '' #Empty response string
      
     # Checking for the wake word/phrase
-    if (wakeWord(text) == True):
+    if ((wakeWord(text) == True)+asis_obj.name):
          # Check for greetings by the user
         response = response + greeting(text)
         # Check to see if the user said date
@@ -150,7 +167,7 @@ while True:
         for phrase in BREAK_WORD:
             if phrase in text:
                 assistantResponse(random.choice(BREAK_RESPONCE))
-                break
+                exit()
         
         OPEN_BROW = ['open web browser','open chrome','open google in chrome','open google search in chrome','open google chrome']
         OPEN_RESPONCE = ['done','completed','task completed','Yes, i have open it']
@@ -179,7 +196,85 @@ while True:
                 server.quit()
                 assistantResponse(random.choice(OPEN_RESPONCE))
                 break
+        
+        if 'play music' in text:
+            music_dir = 'F:\\music'
+            songs = os.listdir(music_dir)
+            print(songs)
+            os.startfile(os.path.join(music_dir,songs[0]))
+        
+        SEARCH_INPUT = ['search for','google for']
+        for phrase in SEARCH_INPUT:
+            if phrase in text.lower():
+                search_term = text.split('for',1)[-1]
+                final_search_term = search_term.split('on',1)[0]
+                url = 'https://www.google.com/search?q='+final_search_term
+                webbrowser.get().open(url)
+                assistantResponse('Here what i found for'+final_search_term+' on google')
 
+        YOUTUBE_SEARCH = ['do a youtube search','search on youtube']
+        YOUTUBE_SEARCH_QUESTION = ['what do you want to search?','what do you want to make me search?','what should i search for?']
+        for phrase in YOUTUBE_SEARCH:
+            if phrase in text.lower():
+                assistantResponse('OK,'+random.choice(YOUTUBE_SEARCH_QUESTION))
+                search_input = recordAudio()
+                youtube_search_term = search_input.split('for',1)[-1]
+                url = 'https://www.youtube.com/results?search_query='+youtube_search_term
+                webbrowser.get().open(url)
+                assistantResponse('Here what i found for'+youtube_search_term+' on youtube')
+
+        CAL_INPUT = ['do a calculation','please, perform some calculation']
+        for phrase in CAL_INPUT:
+            if phrase in text.lower():
+                assistantResponse('what do you want to calculate?')
+                calculator = recordAudio()
+                opr = calculator.split()[1]
+
+                if opr == '+':
+                    assistantResponse(int(calculator.split()[0]) + int(calculator.split()[2]))
+                elif opr == '-':
+                    assistantResponse(int(calculator.split()[0]) - int(calculator.split()[2]))
+                elif opr == 'multiply':
+                    assistantResponse(int(calculator.split()[0]) * int(calculator.split()[2]))
+                elif opr == 'divide':
+                    assistantResponse(int(calculator.split()[0]) / int(calculator.split()[2]))
+                elif opr == 'power':
+                    assistantResponse(int(calculator.split()[0]) ** int(calculator.split()[2]))
+                else:
+                    assistantResponse("Wrong Operator")
+
+            
+        SCREENSHOT_INPUT = ['capture','my screen','screenshot']
+        for phrase in SCREENSHOT_INPUT:
+            if phrase in text.lower():
+                myScreenshot = pyautogui.screenshot()
+                date = datetime.datetime.now()
+                file_name = str(date).replace(":", "-") + "-screenshot.png"
+                myScreenshot.save('C:\\Users\\07ayu\\Desktop\\Voice Assistant\\Voice-Assistent\\screenshots\\'+file_name)
+                assistantResponse('Yeah! it\'s done. i took a screenshot')
+
+        NAME_INPUT = ["what is your name","what's your name","tell me your name"]
+        for phrase in NAME_INPUT:
+            if phrase in text.lower():
+                if asis_obj.name:
+                    assistantResponse("My name is"+asis_obj.name)
+                else:
+                    assistantResponse("i dont know my name . what's your name?")
+
+        MY_NAME_INPUT = ['my name is']
+        for phrase in MY_NAME_INPUT:
+            if phrase in text.lower():
+                person_name = text.split("is")[-1].strip()
+                assistantResponse("okay, i will remember that " + person_name)
+                person_obj.setName(person_name) # remember name in person object
+        
+        ASSIS_NAME_INPUT = ['your name should be']
+        for phrase in ASSIS_NAME_INPUT:
+            if phrase in text.lower():
+                asis_name = text.split("be")[-1].strip()
+                assistantResponse("okay, i will remember that my name is " + asis_name)
+                asis_obj.setName(asis_name)
+        
        # Assistant Audio Response
         assistantResponse(response)
 
