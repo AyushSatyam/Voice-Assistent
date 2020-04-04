@@ -15,13 +15,20 @@ import subprocess
 """
 import speech_recognition as sr
 import os
-import pyttsx3
+#import pyttsx3
 #from gtts import gTTS
+import win32com.client as wincl
 import datetime
 import warnings
 import calendar
 import random
 import wikipedia
+import subprocess
+import webbrowser
+import smtplib
+import requests
+import re
+#from weather import Weather
 
 #Ignore any warnings
 warnings.filterwarnings('ignore')
@@ -30,6 +37,8 @@ def recordAudio():
     r = sr.Recognizer()
     with sr.Microphone() as source:
         print('Say something: ')
+        r.pause_threshold = 1
+        r.adjust_for_ambient_noise(source, duration=1)
         audio = r.listen(source)
         
     data = ""
@@ -44,9 +53,8 @@ def recordAudio():
 # Function to get the virtual assistant response
 def assistantResponse(text):
     print(text)
-    engine = pyttsx3.init()
-    engine.say(text)
-    engine.runAndWait()
+    speak = wincl.Dispatch("SAPI.SpVoice")
+    speak.Speak(text)
 
 def wakeWord(text):
     WAKE_WORDS = ['hey computer','ok computer']
@@ -84,6 +92,14 @@ def getPerson(text):
         if i + 3 <= len(wordList) -1 and wordList[i].lower() == 'who' and wordList[i+1].lower() == 'is':
             return wordList[i+2] + ' '+ wordList[i+3]  
 
+def note(text):
+    date = datetime.datetime.now()
+    file_name = str(date).replace(":", "-") + "-note.txt"
+    with open(file_name, "w") as f:
+        f.write(text)
+
+    subprocess.Popen(["notepad.exe", file_name])
+
 while True:
     # Record the audio
     text = recordAudio()
@@ -120,7 +136,50 @@ while True:
             person = getPerson(text)
             wiki = wikipedia.summary(person, sentences=2)            
             response = response + ' ' + wiki
-       
+
+        NOTE_STRS = ["make a note", "write this down", "remember this"]
+        for phrase in NOTE_STRS:
+            if phrase in text:
+                assistantResponse("What would you like me to write down?")
+                note_text = recordAudio()
+                note(note_text)
+                assistantResponse("I've made a note of that.")
+
+        BREAK_WORD = ['by computer','goodbye computer','good bye']
+        BREAK_RESPONCE = ['have a nice day','goodbye sir','bye','have a good day sir','goodbye and take care']
+        for phrase in BREAK_WORD:
+            if phrase in text:
+                assistantResponse(random.choice(BREAK_RESPONCE))
+                break
+        
+        OPEN_BROW = ['open web browser','open chrome','open google in chrome','open google search in chrome','open google chrome']
+        OPEN_RESPONCE = ['done','completed','task completed','Yes, i have open it']
+        for phrase in OPEN_BROW:
+            if phrase in text.lower():
+                webbrowser.open('https://www.google.co.in/',new=2)
+                assistantResponse(random.choice(OPEN_RESPONCE))
+
+        SEND_EMAIL = ['write an email','please send an email','send an email']
+        for phrase in SEND_EMAIL:
+            if phrase in text.lower():
+                assistantResponse('write down the recipient name')
+                recipient =  input()
+                server = smtplib.SMTP('64.233.184.108')
+                server.ehlo()
+                server.starttls()
+                server.ehlo()
+                #Next, log in to the server
+                server.login("07ayushkasera@gmail.com","satyam8546091008")
+
+                assistantResponse('What do want to text?')
+                #Send the mail
+                msg = "\n " + recordAudio() # The /n separates the message from the headers
+                #fullmsg = msg.as_string()
+                server.sendmail("07ayushkasera@gmail.com", recipient, msg)
+                server.quit()
+                assistantResponse(random.choice(OPEN_RESPONCE))
+                break
+
        # Assistant Audio Response
         assistantResponse(response)
 
