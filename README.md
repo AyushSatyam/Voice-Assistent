@@ -1,5 +1,6 @@
-# Voice-Assistent
-<div>Personal Voice Assistent using python<div> <br>
+[![Build Status](https://travis-ci.org/doge/wow.svg)](https://github.com/AyushSatyam/Voice-Assistent.git)
+# Voice-Assistent 
+<div>Personal Voice Assistent using python <br>
 <p>This voice assistant can perform tasks like greeting, date and time, search a person on Wikipedia and speak, write down on a notepad, open and search on a browser, playing music, search on youtube and taking screenshots, send an Email and many more.</p>
 
 ## Installation
@@ -31,7 +32,7 @@
 </ol>
 
 ## Blog
-<div> I have written a complete blog on this project. You can get more information about the code writing step by step. [(Blog)](https://techblogwithayush.blogspot.com/2020/04/build-your-personal-voice-assistant.html)</div>
+I have written a complete blog on this project. You can get more information about the code writing step by step. [(Blog)](https://techblogwithayush.blogspot.com/2020/04/build-your-personal-voice-assistant.html)
 
 ## License, Author asd Acknoledgement
-<div>I want to give credit to Python libraries and anyone can use these codes. If you want to know more about licensing, you can find more information of license [here](https://docs.python.org/3/license.html)</div>
+I want to give credit to Python libraries and anyone can use these codes. If you want to know more about licensing, you can find more information of license [here](https://docs.python.org/3/license.html)
